@@ -39,9 +39,23 @@ try {
         $pushManager->addNotification($subscription, $payload);
     }
 
-    #$response = $pushManager->sendArtax();
-    $response = $pushManager->sendCurl();
-    var_dump($response);
+    // from synx context using wait()
+    /*
+    $results = \Amp\Promise\wait($pushManager->sendArtax());
+
+    foreach ($results as $uri => $body) {
+        var_dump($body);
+    }
+    */
+
+    // from async context inside an event loop
+    \Amp\Loop::run(function() use ($pushManager) {
+        $results = yield $pushManager->sendArtax();
+
+        foreach ($results as $uri => $body) {
+            var_dump($body);
+        }
+    });
 }
 catch (Throwable $e) {
     var_dump($e);
