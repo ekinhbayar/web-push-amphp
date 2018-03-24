@@ -190,44 +190,6 @@ class WebPushClient extends WebPush {
             ->withBody($options->content);
     }
 
-    /**
-     * Send notification via curl
-     * @return array
-     */
-    public function sendCurl(): array
-    {
-        if (empty($this->notifications)) {
-            return [];
-        }
-
-        $responses = [];
-
-        $ch = curl_init();
-
-        foreach ($this->notifications as $notification) {
-            $request = $this->prepare($notification);
-
-            curl_setopt_array($ch, [
-                CURLOPT_POST           => true,
-                CURLOPT_RETURNTRANSFER => true,
-                CURLOPT_POSTFIELDS     => $request->content,
-                CURLOPT_URL            => $request->endpoint,
-                CURLOPT_HTTPHEADER     => $request->headers,
-                CURLOPT_CAINFO         => 'C:\\cert\\cacert.pem',
-                CURLOPT_VERBOSE        => true,
-                CURLOPT_STDERR         => fopen(__DIR__ . '/../../errorlog.txt', 'w'),
-                CURLOPT_RETURNTRANSFER => false,
-                CURLOPT_SSL_VERIFYPEER => false,
-            ]);
-
-            $responses[] = curl_exec($ch);
-        }
-
-        curl_close($ch);
-
-        return $responses;
-    }
-
     public function sendNotification(Subscription $subscription, ?string $payload = null, bool $flush = false, array $options = [], array $auth = [])
     {
         throw new MethodDisabledException();
