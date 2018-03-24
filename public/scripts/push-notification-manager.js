@@ -66,8 +66,18 @@ const PushNotificationManager = function(publicKey) {
         if (!worker)
             reject('Service worker not registered!');
 
-        _worker = worker;
-        resolve(publicMethods);
+        const resolveWhenActivated = () => {
+            if( workerState.state === "activated" ) {
+                _worker = worker;
+                resolve(publicMethods);
+            }
+        };
+
+        let workerState = worker.active || worker.installing || worker.waiting;
+        if( workerState.state === "activated" )
+            resolveWhenActivated();
+
+        workerState.onstatechange = resolveWhenActivated;
     }
 
     return new Promise((resolve, reject) => {
