@@ -1,0 +1,23 @@
+{
+  "name": "ekinhbayar/web-push-amphp",
+  "description": "Browser notifications",
+  "type": "project",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Ekin Bayar",
+      "email": "me@ekins.space",
+      "role": "Developer"
+    }
+  ],
+  "require": {
+    "minishlink/web-push": "^4.0",
+    "amphp/artax": "dev-master",
+    "amphp/process": "dev-master as 0.3.3"
+  },
+  "autoload": {
+    "psr-4": {
+      "ekinhbayar\\AmpWebPush\\": "src/AmpWebPush"
+    }
+  }
+}
