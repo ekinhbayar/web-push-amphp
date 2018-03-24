@@ -1,13 +1,12 @@
 <?php declare(strict_types=1);
 
+use Amp\Loop;
 use Minishlink\WebPush\Subscription;
 use ekinhbayar\AmpWebPush\WebPushClient;
 
 require_once __DIR__ . "/../vendor/autoload.php";
 
 $config = require_once __DIR__ . "/../config/config.php";
-
-const AMP_DEBUG = true;
 
 $payload = json_encode([
     'title' => 'Example Title',
@@ -39,24 +38,15 @@ try {
         $pushManager->addNotification($subscription, $payload);
     }
 
-    // from synx context using wait()
-    /*
-    $results = \Amp\Promise\wait($pushManager->sendArtax());
-
-    foreach ($results as $uri => $body) {
-        var_dump($body);
-    }
-    */
-
     // from async context inside an event loop
-    \Amp\Loop::run(function() use ($pushManager) {
-        $results = yield $pushManager->sendArtax();
+    Loop::run(function () use ($pushManager) {
+        $results = yield $pushManager->send();
 
         foreach ($results as $uri => $body) {
-            var_dump($body);
+            \var_dump('Body', $body);
         }
     });
 }
-catch (Throwable $e) {
-    var_dump($e);
+catch (\Throwable $e) {
+    \var_dump($e);
 }

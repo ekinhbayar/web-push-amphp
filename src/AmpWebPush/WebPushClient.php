@@ -60,13 +60,13 @@ class WebPushClient extends WebPush {
         return true;
     }
 
-    public function sendArtax(): Promise
+    public function send(): Promise
     {
         if (empty($this->notifications)) {
             return new Success();
         }
 
-        return call(function() {
+        return call(function () {
             $responses = [];
 
             $client = new DefaultClient;
@@ -178,6 +178,11 @@ class WebPushClient extends WebPush {
         return $requestOptions;
     }
 
+    /**
+     * @param RequestOptions $options
+     *
+     * @return Request
+     */
     private function buildRequest(RequestOptions $options): Request
     {
         return (new Request($options->endpoint, 'POST'))
@@ -185,6 +190,10 @@ class WebPushClient extends WebPush {
             ->withBody($options->content);
     }
 
+    /**
+     * Send notification via curl
+     * @return array
+     */
     public function sendCurl(): array
     {
         if (empty($this->notifications)) {
@@ -197,7 +206,7 @@ class WebPushClient extends WebPush {
 
         foreach ($this->notifications as $notification) {
             $request = $this->prepare($notification);
-var_dump($request);
+
             curl_setopt_array($ch, [
                 CURLOPT_POST           => true,
                 CURLOPT_RETURNTRANSFER => true,
