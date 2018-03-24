@@ -6,6 +6,8 @@ use Amp\Artax\Request;
 use Amp\Artax\Response;
 use Amp\Artax\DefaultClient;
 use Amp\Artax\HttpException;
+use Amp\Promise;
+use Amp\Success;
 use Base64Url\Base64Url;
 use Minishlink\WebPush\Encryption;
 use Minishlink\WebPush\Notification;
@@ -58,42 +60,30 @@ class WebPushClient extends WebPush {
         return true;
     }
 
-    public function sendArtax(): array
+    public function sendArtax(): Promise
     {
         if (empty($this->notifications)) {
-            return [];
+            return new Success();
         }
 
-        $responses = [];
+        return call(function() {
+            $responses = [];
 
-        $client = new DefaultClient;
+            $client = new DefaultClient;
 
-        try {
             foreach ($this->notifications as $notification) {
                 $notificationRequest = $this->prepare($notification);
 
-                $responses[] = call(function () use ($client, $notificationRequest) {
+                /** @var Response $response */
+                $response = yield $client->request($this->buildRequest($notificationRequest));
 
-                    $request = (new Request($notificationRequest->endpoint, 'POST'))
-                        ->withHeaders($notificationRequest->headers)
-                        ->withBody($notificationRequest->content);
-
-                    $promise = $client->request($request);
-
-                    /** @var Response $response */
-                    $response = yield $promise;
-
-                    return $response->getBody();
-                });
+                $responses[] = yield $response->getBody();
             }
-        }
-        catch (\Throwable $e) {
-            echo $e->getMessage();
-        }
 
-        $this->notifications = null;
+            $this->notifications = null;
 
-        return $responses;
+            return $responses;
+        });
     }
 
     /**
@@ -188,6 +178,13 @@ class WebPushClient extends WebPush {
         return $requestOptions;
     }
 
+    private function buildRequest(RequestOptions $options): Request
+    {
+        return (new Request($options->endpoint, 'POST'))
+            ->withHeaders($options->headers)
+            ->withBody($options->content);
+    }
+
     public function sendCurl(): array
     {
         if (empty($this->notifications)) {
@@ -200,13 +197,18 @@ class WebPushClient extends WebPush {
 
         foreach ($this->notifications as $notification) {
             $request = $this->prepare($notification);
-
+var_dump($request);
             curl_setopt_array($ch, [
                 CURLOPT_POST           => true,
                 CURLOPT_RETURNTRANSFER => true,
                 CURLOPT_POSTFIELDS     => $request->content,
                 CURLOPT_URL            => $request->endpoint,
-                CURLOPT_HTTPHEADER     => $request->headers
+                CURLOPT_HTTPHEADER     => $request->headers,
+                CURLOPT_CAINFO         => 'C:\\cert\\cacert.pem',
+                CURLOPT_VERBOSE        => true,
+                CURLOPT_STDERR         => fopen(__DIR__ . '/../../errorlog.txt', 'w'),
+                CURLOPT_RETURNTRANSFER => false,
+                CURLOPT_SSL_VERIFYPEER => false,
             ]);
 
             $responses[] = curl_exec($ch);
